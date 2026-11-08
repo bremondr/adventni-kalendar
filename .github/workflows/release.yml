@@ -1,0 +1,59 @@
+name: Release to grafit.games
+
+# A push to the `release` branch puts this calendar live: it replaces
+# calendar/2026/ in bremondr/grafit-games-web and commits to its main branch,
+# which GitHub Pages then publishes on https://grafit.games/.
+# Needs the secret WEB_DEPLOY_KEY (a deploy key with write access to that repo).
+
+on:
+  push:
+    branches: [release]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: bremondr/grafit-games-web
+          ref: main
+          path: web
+          ssh-key: ${{ secrets.WEB_DEPLOY_KEY }}
+          sparse-checkout: |
+            assets
+            calendar/2026
+
+      # The strict check refuses to go live with the date lock off or a skeleton.
+      - name: Assemble and check the release
+        run: |
+          python3 tools/build.py --web web --out _site
+          python3 tools/check.py --site _site --release
+
+      - name: Replace calendar/2026 in the website repo
+        run: |
+          rm -rf web/calendar/2026
+          python3 tools/build.py --out web/calendar/2026
+
+      - name: Commit and push to the website's main branch
+        working-directory: web
+        run: |
+          git config user.name "adventni-kalendar release"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A calendar/2026
+          if git diff --cached --quiet; then
+            echo "Nothing changed on the website."
+            exit 0
+          fi
+          git commit -m "Deploy calendar 2026 from adventni-kalendar@${GITHUB_SHA::7}"
+          git push origin HEAD:main || { git pull --rebase origin main && git push origin HEAD:main; }

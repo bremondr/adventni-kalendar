@@ -1,1 +1,15 @@
 .obsidian/
+
+# Plaintext secrets: passwords, unencrypted images and messages, solutions.
+# This repo is PUBLIC. Only the encrypted output of the encrypt-*.ps1 scripts is committed.
+private/
+
+# Build output
+_site/
+dist/
+.web-cache/
+
+# OS and editor files
+.DS_Store
+.vscode/
+*.log
