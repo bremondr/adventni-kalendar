@@ -1,62 +1,110 @@
-﻿/* Themes: one block per week (see themes.js for the ids and the day each starts on).
-   Everything theme-specific is a variable here, so a theme is just a palette
-   (and optionally extra rules scoped with [data-theme="..."]). The values below
-   are placeholders until the real themes are decided. */
+/* Themes: one palette per advent "week" (see themes.js for the ids and the day each starts on).
+   The 24 days are split into four weeks of six days: 1-6, 7-12, 13-18, 19-24.
+   Everything theme-specific is a variable here, so a theme is just a palette (and optionally
+   extra rules scoped with [data-theme="..."]).
+
+   The same blocks style two things:
+   - the whole page (:root[data-theme]), which follows the calendar date, and
+   - every door (.door[data-theme]), which always wears the palette of its own week,
+     so the grid itself shows how the look changes over the 24 days.
+
+   The colours are DRAFTS taken from the sheltzy32 palette (https://lospec.com/palette-list/sheltzy32),
+   chosen from the week themes in poznamky.md. Tweak freely; only the variables below are used.
+
+   --bg, --glow-1/2   page background (base colour and two corner glows)
+   --panel            dialog background
+   --panel-rgb        same, for the translucent finale panel
+   --door-from/to     door gradient
+   --text, --muted    body text, secondary text
+   --accent(-light)   headings, door numbers, buttons, links; --accent-rgb for rgba() uses
+   --accent-hover     link hover
+   --accent-shadow    shadow under door numbers
+   --message          colour of the revealed finale message
+   --warn             wrong-password hint */
+
+/* Week 1 (days 1-6): autumn, fog, orange, falling leaves. */
 :root,
-:root[data-theme="theme-1"] {
-  --bg: #0b1220;
-  --glow-1: #1a2747;
-  --glow-2: #16213e;
-  --panel: #0f1730;
-  --door-from: #172446;
-  --door-to: #0e1834;
-  --text: #eaf2ff;
-  --muted: #9fb3d1;
-  --accent: #f7c948;
-  --accent-light: #ffd36e;
-  --accent-rgb: 247, 201, 72;
+:root[data-theme="theme-1"],
+.door[data-theme="theme-1"] {
+  --bg: #2b1a17;
+  --glow-1: #683c34;
+  --glow-2: #566a89;
+  --panel: #26171a;
+  --panel-rgb: 38, 23, 26;
+  --door-from: #683c34;
+  --door-to: #331c1a;
+  --text: #ffdba5;
+  --muted: #ccac68;
+  --accent: #f4b03c;
+  --accent-light: #ffa468;
+  --accent-rgb: 244, 176, 60;
+  --accent-hover: #ffda70;
+  --accent-shadow: #5a2c14;
+  --message: #ffdba5;
+  --warn: #ec614a;
 }
 
-:root[data-theme="theme-2"] {
-  --bg: #0a1812;
-  --glow-1: #17402c;
-  --glow-2: #12301f;
-  --panel: #0e2318;
-  --door-from: #15402b;
-  --door-to: #0c2417;
-  --text: #ecfff3;
-  --muted: #9fd1b3;
-  --accent: #6fe39a;
-  --accent-light: #a6f2c2;
-  --accent-rgb: 111, 227, 154;
+/* Week 2 (days 7-12): ground frost, waiting for winter. */
+:root[data-theme="theme-2"],
+.door[data-theme="theme-2"] {
+  --bg: #0f2229;
+  --glow-1: #2c5b6d;
+  --glow-2: #222a5c;
+  --panel: #0e2027;
+  --panel-rgb: 14, 32, 39;
+  --door-from: #2c5b6d;
+  --door-to: #12303a;
+  --text: #cce2e1;
+  --muted: #8babbf;
+  --accent: #8cffde;
+  --accent-light: #c9ec85;
+  --accent-rgb: 140, 255, 222;
+  --accent-hover: #cce2e1;
+  --accent-shadow: #0d4a4a;
+  --message: #cce2e1;
+  --warn: #ff94b3;
 }
 
-:root[data-theme="theme-3"] {
-  --bg: #150b20;
-  --glow-1: #3a1a57;
-  --glow-2: #2a1647;
-  --panel: #1d1030;
-  --door-from: #3a1d5c;
-  --door-to: #22103a;
-  --text: #f6ecff;
-  --muted: #c29fd1;
-  --accent: #e07bff;
-  --accent-light: #efa8ff;
-  --accent-rgb: 224, 123, 255;
+/* Week 3 (days 13-18): first snow, fragile ice. */
+:root[data-theme="theme-3"],
+.door[data-theme="theme-3"] {
+  --bg: #161d4a;
+  --glow-1: #3953c0;
+  --glow-2: #5e96dd;
+  --panel: #141a40;
+  --panel-rgb: 20, 26, 64;
+  --door-from: #3953c0;
+  --door-to: #1f2a74;
+  --text: #f2faff;
+  --muted: #9cd8fc;
+  --accent: #9cd8fc;
+  --accent-light: #cce2e1;
+  --accent-rgb: 156, 216, 252;
+  --accent-hover: #ffffff;
+  --accent-shadow: #14205e;
+  --message: #e4f4ff;
+  --warn: #ff94b3;
 }
 
-:root[data-theme="theme-4"] {
-  --bg: #200b0e;
-  --glow-1: #57201a;
-  --glow-2: #471620;
-  --panel: #301014;
-  --door-from: #5c1d24;
-  --door-to: #3a1016;
-  --text: #fff0ec;
-  --muted: #d1a39f;
-  --accent: #ff8a5c;
-  --accent-light: #ffb08f;
-  --accent-rgb: 255, 138, 92;
+/* Week 4 (days 19-24): deep winter, white nostalgia, presents. */
+:root[data-theme="theme-4"],
+.door[data-theme="theme-4"] {
+  --bg: #1b0d2e;
+  --glow-1: #663b93;
+  --glow-2: #800c53;
+  --panel: #1a0c2a;
+  --panel-rgb: 26, 12, 42;
+  --door-from: #663b93;
+  --door-to: #38002c;
+  --text: #fff6ae;
+  --muted: #c3b0f0;
+  --accent: #ffda70;
+  --accent-light: #fff6ae;
+  --accent-rgb: 255, 218, 112;
+  --accent-hover: #ffffff;
+  --accent-shadow: #38002c;
+  --message: #fff6ae;
+  --warn: #ff94b3;
 }
 
 
@@ -120,7 +168,7 @@ h1 {
   padding: 24px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(9, 14, 30, 0.85);
+  background: rgba(var(--panel-rgb), 0.85);
   backdrop-filter: blur(6px);
   color: var(--text);
   display: flex;
@@ -140,7 +188,7 @@ h1 {
 }
 
 .finale-hint {
-  color: #ff7961;
+  color: var(--warn);
 }
 
 .finale-message {
@@ -150,7 +198,7 @@ h1 {
   padding: 18px;
   font-size: clamp(16px, 2vw, 20px);
   line-height: 1.6;
-  color: #ffe9b0;
+  color: var(--message);
   text-align: center;
 }
 
@@ -196,7 +244,7 @@ h1 {
   font-weight: 800;
   font-size: clamp(20px, 2vw, 30px);
   color: var(--accent);
-  text-shadow: 0 1px 0 #7a5c00;
+  text-shadow: 0 1px 0 var(--accent-shadow);
 }
 .door__preview {
   position: absolute;
@@ -476,7 +524,7 @@ footer {
 }
 
 .footer-link:hover {
-  color: #ffe89c;
+  color: var(--accent-hover);
   text-decoration: underline;
 }
 

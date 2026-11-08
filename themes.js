@@ -3,14 +3,16 @@
 // games for those days can follow the same theme.
 //
 // To define a theme: set `name` (shown under the title; leave null to hide it) and
-// edit the matching palette block in calendar.css. To change when themes switch,
-// edit `startDay` (the first December day a theme is active).
+// edit the matching palette block in calendar.css (it also colours the doors of that week).
+// To change when themes switch, edit `startDay` (the first December day a theme is active).
 
+// The 24 days are split into four "weeks" of six days (not calendar weeks). Names are drafts
+// (see poznamky.md for the intended mood of each week).
 const CALENDAR_THEMES = [
-  { id: "theme-1", name: null, startDay: 1 },
-  { id: "theme-2", name: null, startDay: 7 },
-  { id: "theme-3", name: null, startDay: 14 },
-  { id: "theme-4", name: null, startDay: 21 },
+  { id: "theme-1", name: "Podzimní mlha", startDay: 1 },
+  { id: "theme-2", name: "Přízemní mrazíky", startDay: 7 },
+  { id: "theme-3", name: "První sníh, křehký led", startDay: 13 },
+  { id: "theme-4", name: "Hluboká zima", startDay: 19 },
 ];
 
 function themeForDay(day) {
