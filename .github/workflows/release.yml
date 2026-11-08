@@ -1,13 +1,24 @@
 name: Release to grafit.games
 
-# A push to the `release` branch puts this calendar live: it replaces
-# calendar/2026/ in bremondr/grafit-games-web and commits to its main branch,
-# which GitHub Pages then publishes on https://grafit.games/.
+# Puts the calendar live on https://grafit.games/ by replacing calendar/2026/ in
+# bremondr/grafit-games-web and committing to its main branch (GitHub Pages then
+# publishes it). Only the days that are open today (Prague time) are published, so
+# a game never reaches the website before its date.
+#
+# Runs when:
+#   - the `release` branch is pushed (you merged main into release),
+#   - every hour during December, which opens each new day shortly after midnight
+#     (nothing is committed when nothing changed),
+#   - started by hand from the Actions tab.
+# The content always comes from the `release` branch, also for the scheduled runs
+# (those run the copy of this file that is on main, so keep main and release in sync).
 # Needs the secret WEB_DEPLOY_KEY (a deploy key with write access to that repo).
 
 on:
   push:
     branches: [release]
+  schedule:
+    - cron: "7 * * 12 *"
   workflow_dispatch:
 
 permissions:
@@ -19,10 +30,11 @@ concurrency:
 
 jobs:
   release:
-    if: github.ref == 'refs/heads/release'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: release
 
       - uses: actions/checkout@v4
         with:
@@ -34,16 +46,24 @@ jobs:
             assets
             calendar/2026
 
-      # The strict check refuses to go live with the date lock off or a skeleton.
+      - name: Work out which days are open (Prague time)
+        id: days
+        run: |
+          DAY=$(python3 -c "import sys; sys.path.insert(0, 'tools'); import unlock; print(unlock.days_open())")
+          echo "through=$DAY" >> "$GITHUB_OUTPUT"
+          echo "Days open today: 1..$DAY"
+
+      # The strict check refuses to go live with the date lock off, or when a day
+      # that is open today is missing or half-done.
       - name: Assemble and check the release
         run: |
-          python3 tools/build.py --web web --out _site
-          python3 tools/check.py --site _site --release
+          python3 tools/build.py --web web --out _site --through-day ${{ steps.days.outputs.through }}
+          python3 tools/check.py --site _site --release --through-day ${{ steps.days.outputs.through }}
 
       - name: Replace calendar/2026 in the website repo
         run: |
           rm -rf web/calendar/2026
-          python3 tools/build.py --out web/calendar/2026
+          python3 tools/build.py --out web/calendar/2026 --through-day ${{ steps.days.outputs.through }}
 
       - name: Commit and push to the website's main branch
         working-directory: web
@@ -55,5 +75,5 @@ jobs:
             echo "Nothing changed on the website."
             exit 0
           fi
-          git commit -m "Deploy calendar 2026 from adventni-kalendar@${GITHUB_SHA::7}"
+          git commit -m "Deploy calendar 2026, days 1..${{ steps.days.outputs.through }}, from adventni-kalendar@$(git -C .. rev-parse --short HEAD)"
           git push origin HEAD:main || { git pull --rebase origin main && git push origin HEAD:main; }

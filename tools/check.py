@@ -6,18 +6,25 @@
 
 Verifies that
   1. every local reference (href/src/url()) in the site's HTML and CSS resolves to a file,
-  2. when the calendar is populated, every day has its game, its encrypted image and the finale message,
+  2. no day is half-done (a game without its encrypted image, or the other way round),
   3. the themes in themes.js start at day 1 and have a palette block in calendar.css,
   4. nothing from private/ is tracked by git (this repo is public).
-With --release it also requires that the date lock is on and that all 24 days are populated.
+With --release it also requires that the date lock is on, and that every day open today
+(Prague time, or --through-day N) is complete, plus the finale from day 24. Days that are
+not open yet may be missing: the calendar is released a few days at a time.
 Exit code 1 on any problem.
 """
+from __future__ import annotations
+
 import argparse
 import re
 import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import unquote, urlparse
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # also works with python -I
+import unlock  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 SKIP_DIRS = {".git", "private", "node_modules", "TemplateData", "Build"}
@@ -52,24 +59,39 @@ def check_refs(site: Path) -> int:
     return len(files)
 
 
-def populated() -> bool:
-    return any(d.is_dir() for d in (ROOT / "games").glob("*"))
+def has_game(day: int) -> bool:
+    return (ROOT / "games" / str(day) / "index.html").is_file()
 
 
-def check_content(release: bool):
-    if not populated():
-        if release:
-            problems.append("release: no games yet, the calendar is still a skeleton")
-        else:
-            print("  skeleton (no games yet), skipped content check")
+def has_image(day: int) -> bool:
+    return (ROOT / "images" / f"{day}.json").is_file()
+
+
+def check_content(through: int | None):
+    """Rolling content check.
+
+    Staging (through is None): a day may be missing entirely, but not half-done
+    (a game without its image, or an image without its game).
+    Release: every day up to `through` (the days open today) must be complete, and
+    the finale from day 24. Days after that may be missing; they are only reported.
+    """
+    if through is None:
+        for day in range(1, unlock.LAST_DAY + 1):
+            if has_game(day) != has_image(day):
+                what = "games/%d/index.html" % day if has_game(day) else "images/%d.json" % day
+                problems.append(f"day {day} is half-done: only {what} exists")
         return
-    for day in range(1, 25):
-        if not (ROOT / "images" / f"{day}.json").exists():
-            problems.append(f"missing images/{day}.json")
-        if not (ROOT / "games" / str(day)).is_dir():
-            problems.append(f"missing games/{day}/")
-    if not (ROOT / "messages" / "finale.json").exists():
-        problems.append("missing messages/finale.json")
+    for day in range(1, through + 1):
+        if not has_game(day):
+            problems.append(f"release: day {day} is open but games/{day}/index.html is missing")
+        if not has_image(day):
+            problems.append(f"release: day {day} is open but images/{day}.json is missing")
+    if through >= unlock.LAST_DAY and not (ROOT / "messages" / "finale.json").is_file():
+        problems.append("release: all days are open but messages/finale.json is missing")
+    pending = [d for d in range(through + 1, unlock.LAST_DAY + 1) if not (has_game(d) and has_image(d))]
+    print(f"  days open today: 1..{through}")
+    if pending:
+        print(f"  not ready yet, and not published yet: {', '.join(map(str, pending))}")
 
 
 def check_themes():
@@ -102,10 +124,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--site", required=True, help="assembled site folder (from tools/build.py --web)")
     parser.add_argument("--release", action="store_true", help="stricter checks before going live")
+    parser.add_argument("--through-day", default="auto",
+                        help="with --release: a number or 'auto' (the days open today in Prague, the default)")
     args = parser.parse_args()
 
     n = check_refs(Path(args.site).resolve())
-    check_content(args.release)
+    check_content(unlock.resolve(args.through_day) if args.release else None)
     check_themes()
     check_private()
     if args.release:

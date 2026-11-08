@@ -4,6 +4,9 @@
   Those live in `private/` (gitignored) or outside the repo.
 - Work on a branch `claude/<short-topic>` and open a pull request. Never push to `main` or
   `release`, never force-push.
+- The live site only ever gets the days that are open today (Prague time): `release.yml` runs on every
+  push to `release` and hourly in December and builds with `--through-day auto` from the `release`
+  branch. Keep `main` and `release` in sync by merging `main` into `release`.
 - A merge to `main` publishes the staging site. A push or merge to `release` puts the calendar
   live on grafit.games (commits to `calendar/2026/` in `bremondr/grafit-games-web`). Only the
   owner decides when. Never create or push the `release` branch yourself.
