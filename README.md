@@ -14,7 +14,8 @@ web [grafit.games](https://grafit.games/) žije v repozitáři
 - `images/<den>.json`, `messages/finale.json` – zašifrované obrázky a závěrečná zpráva.
 - `encrypt-image.ps1`, `encrypt-message.ps1` – skripty, které z `private/` vyrobí zašifrované soubory výše (PowerShell).
 - `private/` – **jen na tvém disku**, v `.gitignore`: hesla (`secret.csv`, `final-secret.csv`) a původní obrázky.
-- `tools/build.py` – složí nasaditelnou podobu kalendáře; `tools/check.py` – kontrola odkazů, obsahu a motivů.
+- `tools/build.py` – složí nasaditelnou podobu kalendáře (volitelně jen dny do `--through-day`);
+  `tools/check.py` – kontrola odkazů, obsahu a motivů; `tools/unlock.py` – které dny jsou dnes otevřené.
 - `.github/workflows/` – `staging.yml` (testovací web) a `release.yml` (ostré nasazení).
 
 ## Jak to jede
@@ -35,9 +36,33 @@ větev claude/<téma>  ──pull request──▶  main  ──automaticky─�
    zkontroluje kalendář (přísněji, viz níže), nahradí `calendar/2026/` ve webovém repozitáři a
    commitne do jeho `main`; GitHub Pages ho pak vystaví na grafit.games.
 
+### Postupné odemykání: na web jdou jen dny, které už nastaly
+
+Na ostrý web se nikdy nenasadí hra dne, který ještě nenastal (pražský čas):
+
+- `release.yml` běží při každém pushi do `release` **a každou hodinu v prosinci**, takže nový den se
+  objeví krátce po půlnoci. Když se nic nezměnilo, nic se necommituje.
+- Obsah bere vždy z větve `release`. Do webu se zkopírují jen `games/<den>/` a `images/<den>.json`
+  pro dny `1..dnes`; finále (`messages/finale.json`) až 24. 12. Do 1. 12. nejde na web žádný den,
+  od 25. 12. všech 24.
+- Hry tedy stačí mít ve větvi `release` **před** jejich datem. Co tam ještě není, se prostě nenasadí.
+- Plánované běhy používají kopii `release.yml` z větve `main`, proto držte `main` a `release` pohromadě
+  (sluč `main` do `release`, ne naopak).
+
 Přísná kontrola před ostrým nasazením odmítne: vypnutý zámek data (`ENFORCE_SERVER_DATE_LIMIT`
-v `calendar.js` musí být `true`), rozpracovanou kostru bez her a chybějící dny či finále.
-Dokud je zámek `false`, staging je plně proklikatelný (hodí se pro testování), ale `release` neprojde.
+v `calendar.js` musí být `true`), chybějící nebo rozdělanou hru či obrázek u dne, který už nastal,
+a chybějící finále od 24. 12. Dny, které ještě nenastaly, smí chybět. Na stagingu kontrola jen hlídá,
+aby žádný den nebyl rozdělaný (hra bez obrázku nebo naopak). Dokud je zámek `false`, staging je plně
+proklikatelný (hodí se pro testování), ale `release` neprojde.
+
+Lokálně: `python tools/build.py --out dist --through-day auto` vyrobí to, co by se dnes nasadilo.
+S `--through-day 5` (nebo jiným číslem) si vyzkoušíš, co by se nasadilo v ten den.
+
+### Pozor: repozitář a staging jsou veřejné
+
+Hry budoucích dnů v `main` a na stagingu uvidí každý, kdo adresu najde. Ostrý web je před datem
+nezveřejní, ale tento repozitář ano. Pokud má být hra překvapením, přidej ji do `main` (a do `release`)
+až těsně před jejím dnem. Obrázky a finále jsou zašifrované, hry ne.
 
 Workflow `release.yml` používá tajný klíč `WEB_DEPLOY_KEY` (deploy key s právem zápisu jen do
 `grafit-games-web`). Nasazení se dotkne pouze `calendar/2026/` ve webu.
@@ -66,7 +91,8 @@ Pak otevři <http://localhost:8080/calendar/2026/>. Se zámkem data vypnutým fu
 ## Velikost
 
 Hry jsou těžké (loni asi 440 MB za 24 dní). GitHub doporučuje držet repozitář i web Pages pod
-zhruba 1 GB a soubor nesmí mít přes 100 MB. Věnujte tomu pozornost dřív, než přibude všech 24 her.
+zhruba 1 GB a soubor nesmí mít přes 100 MB. Postupné nasazování to trochu zmírní (do webu se hry
+přidávají po dnech), ale repozitář webu roste i tak; věnujte tomu pozornost dřív, než přibude všech 24 her.
 
 ## Jak přispívat
 
