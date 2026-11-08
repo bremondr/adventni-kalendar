@@ -1,0 +1,58 @@
+name: Staging
+
+# Pull requests only build and check. A push to main (a merged PR) also publishes
+# the staging site: https://bremondr.github.io/adventni-kalendar/
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Public repo, so no key is needed. Only the shared assets are used.
+      - uses: actions/checkout@v4
+        with:
+          repository: bremondr/grafit-games-web
+          ref: main
+          path: web
+          sparse-checkout: assets
+
+      - name: Assemble the site (same layout as grafit.games)
+        run: python3 tools/build.py --web web --out _site
+
+      - name: Check
+        run: python3 tools/check.py --site _site
+
+      - uses: actions/configure-pages@v5
+        if: github.event_name != 'pull_request'
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
